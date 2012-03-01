@@ -36,7 +36,7 @@ setup(name='silva.app.forest',
       install_requires=[
         'Zope2',
         'five.grok',
-        'infrae.wsgi >= 2.0a1',
+        'infrae.wsgi',
         ],
       tests_require=tests_require,
       extras_require={'test': tests_require},

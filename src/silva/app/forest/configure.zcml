@@ -1,0 +1,34 @@
+<configure
+   xmlns="http://namespaces.zope.org/zope"
+   xmlns:five="http://namespaces.zope.org/five"
+   xmlns:browser="http://namespaces.zope.org/browser"
+   xmlns:grok="http://namespaces.zope.org/grok">
+
+  <include package="five.grok" />
+  <include package="infrae.wsgi" />
+
+  <five:registerPackage package="." />
+
+  <grok:grok package="." />
+
+  <!-- Absolute URL -->
+  <view
+     for="silva.core.interfaces.ISilvaObject"
+     factory=".absoluteurl.ForestURL"
+     type="infrae.wsgi.interfaces.IRequest"
+     permission="zope.Public"
+     provides="silva.core.views.interfaces.ISilvaURL"
+     />
+
+  <browser:page
+     for="silva.core.interfaces.ISilvaObject"
+     layer="infrae.wsgi.interfaces.IRequest"
+     name="absolute_url"
+     class=".absoluteurl.ForestURL"
+     permission="zope.Public"
+     allowed_interface="silva.core.views.interfaces.ISilvaURL"
+     />
+
+
+
+</configure>
