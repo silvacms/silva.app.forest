@@ -2,19 +2,27 @@
    xmlns="http://namespaces.zope.org/zope"
    xmlns:five="http://namespaces.zope.org/five"
    xmlns:browser="http://namespaces.zope.org/browser"
+   xmlns:monkey="http://namespaces.plone.org/monkey"
    xmlns:grok="http://namespaces.zope.org/grok">
 
   <include package="five.grok" />
   <include package="infrae.wsgi" />
+  <include package="collective.monkeypatcher" />
 
   <five:registerPackage package="." />
 
   <grok:grok package="." />
 
+  <monkey:patch
+     class="OFS.Traversable.Traversable"
+     original="absolute_url"
+     replacement=".absoluteurl.absolute_url"
+     />
+
   <!-- Absolute URL -->
   <view
      for="silva.core.interfaces.ISilvaObject"
-     factory=".absoluteurl.ForestURL"
+     factory=".absoluteurl.ContentForestURL"
      type="infrae.wsgi.interfaces.IRequest"
      permission="zope.Public"
      provides="silva.core.views.interfaces.ISilvaURL"
@@ -24,9 +32,43 @@
      for="silva.core.interfaces.ISilvaObject"
      layer="infrae.wsgi.interfaces.IRequest"
      name="absolute_url"
-     class=".absoluteurl.ForestURL"
+     class=".absoluteurl.ContentForestURL"
      permission="zope.Public"
      allowed_interface="silva.core.views.interfaces.ISilvaURL"
+     />
+
+  <view
+     for="silva.core.interfaces.IVersion"
+     factory=".absoluteurl.VersionForestURL"
+     type="infrae.wsgi.interfaces.IRequest"
+     permission="zope.Public"
+     provides="silva.core.views.interfaces.ISilvaURL"
+     />
+
+  <browser:page
+     for="silva.core.interfaces.IVersion"
+     layer="infrae.wsgi.interfaces.IRequest"
+     name="absolute_url"
+     class=".absoluteurl.VersionForestURL"
+     permission="zope.Public"
+     allowed_interface="silva.core.views.interfaces.ISilvaURL"
+     />
+
+  <view
+     for="OFS.interfaces.ITraversable"
+     factory=".absoluteurl.ZopeForestURL"
+     type="infrae.wsgi.interfaces.IRequest"
+     permission="zope.Public"
+     provides="zope.traversing.browser.interfaces.IAbsoluteURL"
+     />
+
+  <browser:page
+     for="OFS.interfaces.ITraversable"
+     layer="infrae.wsgi.interfaces.IRequest"
+     name="absolute_url"
+     class=".absoluteurl.ZopeForestURL"
+     permission="zope.Public"
+     allowed_interface="zope.traversing.browser.interfaces.IAbsoluteURL"
      />
 
 

@@ -4,6 +4,7 @@
 # $Id$
 
 import logging
+import urlparse
 
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
@@ -13,14 +14,15 @@ import zExceptions
 from five import grok
 from zope.component import IFactory
 from zope.component import queryUtility
-from zope.interface import directlyProvides, alsoProvides, noLongerProvides
+from zope.interface import alsoProvides, noLongerProvides
 from zope.publisher.interfaces.browser import IBrowserSkinType
 from infrae.wsgi.utils import traverse
 
 from silva.app.forest import interfaces
 from silva.app.forest import utils
-from silva.core.services.base import SilvaService
 from silva.core import conf as silvaconf
+from silva.core.layout.traverser import SET_SKIN_ALLOWED_FLAG, applySkinButKeepSome
+from silva.core.services.base import SilvaService
 from silva.translations import translate as _
 from zeam.form import silva as silvaforms
 
@@ -107,12 +109,20 @@ class ForestService(SilvaService):
 InitializeClass(ForestService)
 
 
+def update_hostname(url, target):
+    # replace the host part.
+    original_parts = urlparse.urlparse(url)
+    target_parts = urlparse.urlparse(target)
+    return urlparse.urlunparse(
+        original_parts[:2] + target_parts[2:])
+
+
 class Rewrite(object):
     grok.implements(interfaces.IRewrite)
 
     def __init__(self, original, rewrite, skin):
-        self.original = original
-        self.rewrite = rewrite
+        self.original = str(original)
+        self.rewrite = str(rewrite)
         self.skin = skin
         self.path = []
         self.url = None
@@ -128,6 +138,8 @@ class Rewrite(object):
     def apply(self, root, request):
         content = traverse(self.path, root, request)
         request['URL'] = self.url
+        request['ACTUAL_URL'] = update_hostname(
+            self.url, request['ACTUAL_URL'])
         if self.skin:
             skin = queryUtility(IBrowserSkinType, name=self.skin)
             if skin is None:
@@ -135,7 +147,8 @@ class Rewrite(object):
                     u"Missing skin '%s', please update your settings.",
                     self.skin)
             else:
-                directlyProvides(request, skin)
+                applySkinButKeepSome(request, skin)
+                request[SET_SKIN_ALLOWED_FLAG] = False
         return content
 
 
@@ -151,7 +164,7 @@ class VirtualHost(object):
     grok.implements(interfaces.IVirtualHost)
 
     def __init__(self, url, aliases, rewrites):
-        self.url = url.rstrip('/')
+        self.url = str(url).rstrip('/')
         self.aliases = aliases
         self.rewrites = rewrites
         self.by_url = utils.TupleMap()
