@@ -50,7 +50,7 @@ class ForestURLTestCase(unittest.TestCase):
         service = component.getUtility(IForestService)
         service.activate()
 
-        request = TestRequest(application=self.root, url='http://localhost')
+        request = TestRequest(application=self.root)
         url = component.getMultiAdapter((self.root, request), IContentURL)
         self.assertTrue(verifyObject(IContentURL, url))
 
