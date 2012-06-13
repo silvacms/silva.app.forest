@@ -22,6 +22,7 @@ class VirtualHosting(grok.MultiAdapter):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.root = None
         self.host = None
 
     def __call__(self, method, path):
@@ -36,6 +37,7 @@ class VirtualHosting(grok.MultiAdapter):
                 rule, index = self.host.query(path_key)
                 if rule is not None:
                     root = rule.apply(root, self.request)
+                    self.root = root
                     if index:
                         path = path[:-index]
                 else:

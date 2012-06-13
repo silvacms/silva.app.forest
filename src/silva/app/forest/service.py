@@ -16,12 +16,13 @@ from zope.component import IFactory
 from zope.component import queryUtility
 from zope.interface import alsoProvides, noLongerProvides
 from zope.publisher.interfaces.browser import IBrowserSkinType
-from infrae.wsgi.utils import traverse
+from infrae.wsgi.utils import traverse, split_path_info
 
 from silva.app.forest import interfaces
 from silva.app.forest import utils
 from silva.core import conf as silvaconf
-from silva.core.layout.traverser import SET_SKIN_ALLOWED_FLAG, applySkinButKeepSome
+from silva.core.layout.traverser import SET_SKIN_ALLOWED_FLAG
+from silva.core.layout.traverser import applySkinButKeepSome
 from silva.core.services.base import SilvaService
 from silva.translations import translate as _
 from zeam.form import silva as silvaforms
@@ -89,7 +90,8 @@ class ForestService(SilvaService):
     def activate(self):
         root = self.getPhysicalRoot()
         if interfaces.IForestApplication.providedBy(root):
-            raise ValueError(u"The feature is already activated for a Silva site.")
+            raise ValueError(
+                _(u"The feature is already activated for a Silva site."))
         setattr(root, '__silva__', self.get_silva_path())
         alsoProvides(root, interfaces.IForestApplication)
 
@@ -98,10 +100,12 @@ class ForestService(SilvaService):
     def deactivate(self):
         root = self.getPhysicalRoot()
         if not interfaces.IForestApplication.providedBy(root):
-            raise ValueError(u"The feature is not activated.")
+            raise ValueError(
+                _(u"The feature is not activated."))
         path = getattr(root, '__silva__', tuple())
         if path != self.get_silva_path():
-            raise ValueError(u"The feature is activated by an another Silva site.")
+            raise ValueError(
+                _(u"The feature is activated by an another Silva site."))
         delattr(root, '__silva__')
         noLongerProvides(root, interfaces.IForestApplication)
 
@@ -126,10 +130,15 @@ class Rewrite(object):
         self.skin = skin
         self.path = []
         self.url = None
+        self.server_url = None
+        self.server_script = None
 
     def prepare(self, host, root):
         self.path = utils.path2tuple(self.rewrite)
         self.url = (host.url + self.original).rstrip('/')
+        url_parts = urlparse.urlparse(self.url)
+        self.server_url = urlparse.urlunparse(url_parts[:2] + ('',) * 4)
+        self.server_script = split_path_info(url_parts[2])
         try:
             traverse(self.path, root)
         except zExceptions.BadRequest:
@@ -138,8 +147,11 @@ class Rewrite(object):
     def apply(self, root, request):
         content = traverse(self.path, root, request)
         request['URL'] = self.url
-        request['ACTUAL_URL'] = update_hostname(
-            self.url, request['ACTUAL_URL'])
+        request['ACTUAL_URL'] = self.server_url + urlparse.urlunparse(
+            ('', '') + urlparse.urlparse(request['ACTUAL_URL'])[2:])
+        request['SERVER_URL'] = str(self.server_url)
+        request._script = list(self.server_script)
+        request._resetURLS()
         if self.skin:
             skin = queryUtility(IBrowserSkinType, name=self.skin)
             if skin is None:
@@ -175,7 +187,9 @@ class VirtualHost(object):
         for rewrite in self.rewrites:
             rewrite.prepare(self, root)
             try:
-                self.by_url.add(base + utils.path2tuple(rewrite.original), rewrite)
+                self.by_url.add(
+                    base + utils.path2tuple(rewrite.original),
+                    rewrite)
             except KeyError:
                 raise ValueError(
                     u"Duplicate url entry for %s in %s" % (
@@ -214,7 +228,8 @@ class ForestActivationSettings(silvaforms.ZMISubForm):
     grok.order(10)
 
     label = _(u"Activation")
-    description = _(u"Activate or deactivate advanced virtual hosting for this Silva site.")
+    description = _(u"Activate or deactivate advanced virtual hosting "
+                    u"for this Silva site.")
 
     @silvaforms.action(
         _(u"Activate"),

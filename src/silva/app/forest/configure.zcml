@@ -19,13 +19,25 @@
      replacement=".absoluteurl.absolute_url"
      />
 
+  <monkey:patch
+     class="OFS.Traversable.Traversable"
+     original="absolute_url_path"
+     replacement=".absoluteurl.absolute_url_path"
+     />
+
+  <monkey:patch
+     class="Products.ZCatalog.CatalogBrains.AbstractCatalogBrain"
+     original="getURL"
+     replacement=".absoluteurl.absolute_url"
+     />
+
   <!-- Absolute URL -->
   <view
      for="silva.core.interfaces.ISilvaObject"
      factory=".absoluteurl.ContentForestURL"
      type="infrae.wsgi.interfaces.IRequest"
      permission="zope.Public"
-     provides="silva.core.views.interfaces.ISilvaURL"
+     provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
@@ -34,7 +46,7 @@
      name="absolute_url"
      class=".absoluteurl.ContentForestURL"
      permission="zope.Public"
-     allowed_interface="silva.core.views.interfaces.ISilvaURL"
+     allowed_interface="silva.core.views.interfaces.IContentURL"
      />
 
   <view
@@ -42,7 +54,7 @@
      factory=".absoluteurl.VersionForestURL"
      type="infrae.wsgi.interfaces.IRequest"
      permission="zope.Public"
-     provides="silva.core.views.interfaces.ISilvaURL"
+     provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
@@ -51,7 +63,7 @@
      name="absolute_url"
      class=".absoluteurl.VersionForestURL"
      permission="zope.Public"
-     allowed_interface="silva.core.views.interfaces.ISilvaURL"
+     allowed_interface="silva.core.views.interfaces.IContentURL"
      />
 
   <view
@@ -71,6 +83,22 @@
      allowed_interface="zope.traversing.browser.interfaces.IAbsoluteURL"
      />
 
+  <view
+     for="Products.ZCatalog.interfaces.ICatalogBrain"
+     factory=".absoluteurl.BrainForestURL"
+     type="infrae.wsgi.interfaces.IRequest"
+     permission="zope.Public"
+     provides="zope.traversing.browser.interfaces.IAbsoluteURL"
+     />
+
+  <browser:page
+     for="Products.ZCatalog.interfaces.ICatalogBrain"
+     layer="infrae.wsgi.interfaces.IRequest"
+     name="absolute_url"
+     class=".absoluteurl.BrainForestURL"
+     permission="zope.Public"
+     allowed_interface="zope.traversing.browser.interfaces.IAbsoluteURL"
+     />
 
 
 </configure>

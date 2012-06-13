@@ -3,8 +3,8 @@
 # See also LICENSE.txt
 # $Id$
 
-
 import urlparse
+
 from infrae.wsgi.utils import split_path_info
 
 _marker = object()

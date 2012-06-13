@@ -37,7 +37,6 @@ class IForestApplication(IApplication):
     __silva__ = Attribute(u"")
 
 
-
 class IRewrite(Interface):
     original = schema.TextLine(
         title=_(u"Original URL path"),

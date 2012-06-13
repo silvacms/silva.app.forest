@@ -9,7 +9,7 @@ import os
 version = '1.0dev'
 
 tests_require = [
-    'Products.Silva [testing]',
+    'Products.Silva [test]',
     ]
 
 setup(name='silva.app.forest',
@@ -35,9 +35,18 @@ setup(name='silva.app.forest',
       zip_safe=False,
       install_requires=[
         'Zope2',
+        'collective.monkeypatcher',
         'five.grok',
         'infrae.wsgi',
-        'collective.monkeypatcher',
+        'silva.core.conf',
+        'silva.core.interfaces',
+        'silva.core.layout',
+        'silva.core.services',
+        'silva.core.views',
+        'zeam.form.silva',
+        'zope.component',
+        'zope.interface',
+        'zope.traversing',
         ],
       tests_require=tests_require,
       extras_require={'test': tests_require},
