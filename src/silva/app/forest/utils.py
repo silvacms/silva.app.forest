@@ -51,6 +51,7 @@ class TupleMap(object):
     def get(self, key, default=None, fallback=False):
         store = self._store
         default_index = 0
+        index = 0
 
         for index, piece in enumerate(key):
             following = store.get(piece)

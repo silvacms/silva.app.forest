@@ -3,27 +3,16 @@
 # See also LICENSE.txt
 # $Id$
 
-from Products.Five import BrowserView
-
 from infrae.wsgi.interfaces import IVirtualHosting
 from silva.app.forest.interfaces import IForestHosting
-from silva.core.views.absoluteurl import AbsoluteURL
-from zope.component import getMultiAdapter
-from zope.interface import implements
-from zope.traversing.browser.interfaces import IAbsoluteURL
+from silva.core.views import absoluteurl
 
 from zExceptions import BadRequest
 
 
-class ZopeForestURL(BrowserView):
-    implements(IAbsoluteURL)
+class SimpleURL(object):
 
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def url(self, relative=False):
-        path = self.context.getPhysicalPath()
+    def _url(self, path, relative=False, preview=False):
         vhm = self.request.get_plugin(IVirtualHosting)
         if not IForestHosting.providedBy(vhm) or vhm.host is None:
             return self.request.physicalPathToURL(path)
@@ -33,56 +22,28 @@ class ZopeForestURL(BrowserView):
             raise BadRequest(
                 u"No virtual host is defined for %s" % self.context)
 
-        url = list(path[index + 1:])
+        path = list(path[index + 1:])
         if relative:
-            return '/'.join(rule.server_script + url)
-        return rule.url + '/' + '/'.join(url)
-
-    __call__ = __repr__ = __unicode__ = __str__ = url
-
-    def breadcrumbs(self):
-        return tuple()
+            return '/' + '/'.join(rule.server_script + path)
+        return '/'.join([rule.url,] + path)
 
 
-class BrainForestURL(BrowserView):
-    implements(IAbsoluteURL)
+class AbsoluteURL(SimpleURL, absoluteurl.AbsoluteURL):
+    pass
 
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def url(self, relative=False):
-        path = self.context.getPath()
-        vhm = self.request.get_plugin(IVirtualHosting)
-        if not IForestHosting.providedBy(vhm) or vhm.host is None:
-            return self.request.physicalPathToURL(path)
-
-        rule, index = vhm.host.by_path.get(path[1:], fallback=True)
-        if rule is None:
-            raise BadRequest(
-                u"No virtual host is defined for %s" % self.context)
-
-        url = list(path[index + 1:])
-        if relative:
-            return '/'.join(rule.server_script + url)
-        return rule.url + '/' + '/'.join(url)
-
-    __call__ = __repr__ = __unicode__ = __str__ = url
-
-    def breadcrumbs(self):
-        return tuple()
+class BrainAbsoluteURL(SimpleURL, absoluteurl.BrainAbsoluteURL):
+    pass
 
 
-class ContentForestURL(AbsoluteURL):
+class ContentURL(object):
 
-    def url(self, preview=False, relative=False):
-        path = self.context.getPhysicalPath()
+    def _url(self, path, relative=False, preview=False):
         vhm = self.request.get_plugin(IVirtualHosting)
         if not IForestHosting.providedBy(vhm) or vhm.host is None:
             # If the extension is not enabled, or we are not in a
             # rewriting situation, go up a level.
-            return super(ContentForestURL, self).url(
-                preview=preview, relative=relative)
+            return super(ContentURL, self)._url(
+                path, preview=preview, relative=relative)
 
         rule, index = vhm.host.by_path.get(path[1:], fallback=True)
         if rule is None:
@@ -96,30 +57,17 @@ class ContentForestURL(AbsoluteURL):
             path.insert(preview_position, '++preview++')
 
         if relative:
-            return  '/'.join(rule.server_script + path)
-        return rule.url + '/' + '/'.join(path)
-
-    def is_virtual_root(self, path):
-        vhm = self.request.get_plugin(IVirtualHosting)
-        if not IForestHosting.providedBy(vhm) or vhm.host is None:
-            # If the extension is not enabled, or we are not in a
-            # rewriting situation, go up a level.
-            return super(ContentForestURL, self).is_virtual_root(path)
-
-        rule, index = vhm.host.by_path.get(path[1:])
-        return rule is not None
+            return '/' + '/'.join(rule.server_script + path)
+        return '/'.join([rule.url,] + path)
 
 
-class VersionForestURL(ContentForestURL):
-
-    def title(self, preview=False):
-        return self.context.get_short_title()
+class ContentAbsoluteURL(ContentURL, absoluteurl.ContentAbsoluteURL):
+    pass
 
 
-def absolute_url(self, relative=0):
-    return getMultiAdapter(
-        (self, self.REQUEST), IAbsoluteURL).url(relative=False)
+class VersionAbsoluteURL(ContentURL, absoluteurl.VersionAbsoluteURL):
+    pass
 
-def absolute_url_path(self):
-    return getMultiAdapter(
-        (self, self.REQUEST), IAbsoluteURL).url(relative=True)
+
+class ErrorAbsoluteURL(ContentURL, absoluteurl.ErrorAbsoluteURL):
+    pass
