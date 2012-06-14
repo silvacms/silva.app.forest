@@ -10,6 +10,8 @@ version = '1.0dev'
 
 tests_require = [
     'Products.Silva [test]',
+    'silvatheme.standardissue',
+    'silvatheme.multiflex',
     ]
 
 setup(name='silva.app.forest',

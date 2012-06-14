@@ -48,6 +48,10 @@ class IRewrite(Interface):
         title=_(u"Skin to apply"),
         source=skins,
         required=False)
+    skin_enforce =  schema.Bool(
+        title=_(u"Force skin"),
+        default=False,
+        required=False)
 
 
 class IVirtualHost(Interface):

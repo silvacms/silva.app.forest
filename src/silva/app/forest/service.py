@@ -21,6 +21,8 @@ from infrae.wsgi.utils import traverse, split_path_info
 from silva.app.forest import interfaces
 from silva.app.forest import utils
 from silva.core import conf as silvaconf
+from silva.core.interfaces import ISilvaObject
+from silva.core.layout.interfaces import ISkinLookup
 from silva.core.layout.traverser import SET_SKIN_ALLOWED_FLAG
 from silva.core.layout.traverser import applySkinButKeepSome
 from silva.core.services.base import SilvaService
@@ -124,10 +126,11 @@ def update_hostname(url, target):
 class Rewrite(object):
     grok.implements(interfaces.IRewrite)
 
-    def __init__(self, original, rewrite, skin):
+    def __init__(self, original, rewrite, skin=None, skin_enforce=True):
         self.original = str(original)
         self.rewrite = str(rewrite)
         self.skin = skin
+        self.skin_enforce = skin_enforce
         self.path = []
         self.url = None
         self.server_url = None
@@ -153,6 +156,7 @@ class Rewrite(object):
         request._script = list(self.server_script)
         request._resetURLS()
         if self.skin:
+            # Apply hardcoded skin
             skin = queryUtility(IBrowserSkinType, name=self.skin)
             if skin is None:
                 logger.error(
@@ -160,7 +164,19 @@ class Rewrite(object):
                     self.skin)
             else:
                 applySkinButKeepSome(request, skin)
-                request[SET_SKIN_ALLOWED_FLAG] = False
+                if self.skin_enforce:
+                    request[SET_SKIN_ALLOWED_FLAG] = False
+        else:
+            # Fallback on the default Silva skin
+            if ISilvaObject.providedBy(content):
+                publication = content.get_publication()
+                skin_lookup = ISkinLookup(publication, None)
+                if skin_lookup is not None:
+                    skin = skin_lookup.get_skin(request)
+                    if skin is not None:
+                        # We found a skin to apply
+                        applySkinButKeepSome(request, skin)
+
         return content
 
 
@@ -262,6 +278,11 @@ class ForestVirtualHostSettings(silvaforms.ZMISubForm):
     grok.order(20)
 
     label = _(u"Define the virtual hosts")
+    description = _(
+        u"Define the virtual hosts usuable by the 'X-VHM-Url' HTTP header, "
+        u"and the list of URL rewriting that will happen inside this virtual "
+        u"host. You have the possibility to set (and enforce) a specific skin "
+        u"for a given rewriting rule.")
     fields = silvaforms.Fields(interfaces.IVirtualHostSettings)
     ignoreContent = False
 

@@ -33,8 +33,13 @@ class VirtualHostingTestCase(unittest.TestCase):
         factory = self.root.docs.dev.manage_addProduct['Silva']
         factory.manage_addFolder('resources', 'Resources')
 
+
+class DefaultHostingTestCase(VirtualHostingTestCase):
+
     def test_not_activated(self):
-        request = TestRequest(application=self.root, url='http://localhost')
+        request = TestRequest(
+            application=self.root,
+            url='http://localhost')
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
         self.assertEqual(root, request.application)
@@ -72,7 +77,9 @@ class ActivatedVirtualHostingTestCase(VirtualHostingTestCase):
         service.activate()
 
     def test_activated_default(self):
-        request = TestRequest(application=self.root, url='http://localhost')
+        request = TestRequest(
+            application=self.root,
+            url='http://localhost')
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
         self.assertEqual(root, request.application)
@@ -122,13 +129,14 @@ class OneRuleHostingTestCase(VirtualHostingTestCase):
         """
         request = TestRequest(
             application=self.root,
-            url='http://development.server.corp',
+            url='http://development.server.corp/docs',
             headers=[('X-VHM-Url', 'http://localhost')])
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
         self.assertEqual(root, self.root)
-        self.assertEqual(method, request.method)
-        self.assertEqual(path, request.path)
+        self.assertEqual(method, 'index_html')
+        self.assertEqual(path, ['docs'])
+        self.assertEqual('http://localhost/docs', request['ACTUAL_URL'])
 
         url = getMultiAdapter((self.root, request), IContentURL)
         self.assertTrue(verifyObject(IContentURL, url))
@@ -157,12 +165,13 @@ class OneRuleHostingTestCase(VirtualHostingTestCase):
         """
         request = TestRequest(
             application=self.root,
-            url='http://localhost')
+            url='http://localhost/docs')
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
         self.assertEqual(root, request.application)
         self.assertEqual(method, 'index_html')
-        self.assertEqual(path, [])
+        self.assertEqual(path, ['docs'])
+        self.assertEqual('http://localhost/docs', request['ACTUAL_URL'])
 
         url = getMultiAdapter((self.root, request), IContentURL)
         self.assertTrue(verifyObject(IContentURL, url))
@@ -863,7 +872,7 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(VirtualHostingTestCase))
+    suite.addTest(unittest.makeSuite(DefaultHostingTestCase))
     suite.addTest(unittest.makeSuite(ActivatedVirtualHostingTestCase))
     suite.addTest(unittest.makeSuite(OneRuleHostingTestCase))
     suite.addTest(unittest.makeSuite(MultipleRulesHostingTestCase))

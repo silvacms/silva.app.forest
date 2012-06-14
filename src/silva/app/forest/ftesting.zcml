@@ -2,6 +2,8 @@
    xmlns="http://namespaces.zope.org/zope">
 
   <include package="Products.Silva" file="ftesting.zcml" />
+  <include package="silvatheme.standardissue" />
+  <include package="silvatheme.multiflex" />
   <include package="silva.app.forest" />
 
 </configure>
