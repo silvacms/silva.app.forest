@@ -37,6 +37,10 @@ class BrainAbsoluteURL(SimpleURL, absoluteurl.BrainAbsoluteURL):
 
 class ContentURL(object):
 
+    def _virtual_root(self, content):
+        vhm = self.request.get_plugin(IVirtualHosting)
+        return vhm.root == content
+
     def _url(self, path, relative=False, preview=False):
         vhm = self.request.get_plugin(IVirtualHosting)
         if not IForestHosting.providedBy(vhm) or vhm.host is None:
