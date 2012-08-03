@@ -17,6 +17,7 @@ from infrae.wsgi.interfaces import IVirtualHosting
 
 from silva.core.interfaces import ISilvaService
 from silva.translations import translate as _
+from silva.core.conf import schema as silvaschema
 
 
 @grok.provider(IContextSourceBinder)
@@ -72,6 +73,13 @@ class IVirtualHostSettings(Interface):
     hosts = schema.Set(
         title=_(u"Virtual hosts"),
         value_type=schema.Object(schema=IVirtualHost),
+        required=True)
+
+
+class IVirtualHostImportSettings(Interface):
+    hosts_csv = silvaschema.Bytes(
+        title=_(u"Import hosts"),
+        description=_(u"Import host definition as a CSV file."),
         required=True)
 
 

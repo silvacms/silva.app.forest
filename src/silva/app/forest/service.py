@@ -3,8 +3,10 @@
 # See also LICENSE.txt
 # $Id$
 
+import csv
 import logging
 import urlparse
+import collections
 
 from AccessControl import ClassSecurityInfo
 from App.class_init import InitializeClass
@@ -31,6 +33,23 @@ from zeam.form import silva as silvaforms
 
 logger = logging.getLogger('infrae.rewriterule')
 
+str_from = collections.namedtuple(
+    'str_from',
+    ['url', 'original', 'rewrite', 'skin', 'skin_enforce'])
+
+def to_str(value):
+    if isinstance(value, unicode):
+        return value.encode('utf-8')
+    if isinstance(value, str):
+        return value
+    if isinstance(value, bool):
+        if value:
+            return 'on'
+        return 'off'
+    if value is None:
+        return ''
+    raise NotImplementedError()
+
 
 class ForestService(SilvaService):
     grok.implements(interfaces.IForestService)
@@ -45,6 +64,44 @@ class ForestService(SilvaService):
 
     _hosts = []
     _query_hosts = {}
+
+    security.declareProtected(
+        'View Management Screens', 'export_csv')
+    def export_csv(self, stream):
+        writer = csv.writer(stream)
+        for host in self._hosts:
+            for rewrite in host.rewrites:
+                writer.writerow(map(
+                        to_str, [host.url,
+                                 rewrite.original,
+                                 rewrite.rewrite,
+                                 rewrite.skin,
+                                 rewrite.skin_enforce]))
+
+    security.declareProtected(
+        'View Management Screens', 'import_csv')
+    def import_csv(self, stream):
+        reader = csv.reader(stream)
+        hosts = []
+        host = None
+        for number, line in enumerate(reader):
+            if len(line) != 5:
+                raise ValueError(
+                    u"Invalid number of options at line %d." % number)
+            data = str_from(*line)
+            if host is None or data.url != host.url:
+                if host is not None:
+                    hosts.append(host)
+                host = VirtualHost(data.url, [], [])
+            host.rewrites.append(
+                Rewrite(
+                    data.original,
+                    data.rewrite,
+                    data.skin or None,
+                    data.skin_enforce == 'on'))
+        if host is not None:
+            hosts.append(host)
+        self.set_hosts(hosts)
 
     security.declareProtected(
         'View Management Screens', 'set_hosts')
@@ -253,8 +310,8 @@ class ForestActivationSettings(silvaforms.ZMISubForm):
     def activate(self):
         try:
             self.context.activate()
-        except ValueError, e:
-            self.status = e.args[0]
+        except ValueError as error:
+            self.status = error.args[0]
             return silvaforms.FAILURE
         return silvaforms.SUCCESS
 
@@ -264,8 +321,8 @@ class ForestActivationSettings(silvaforms.ZMISubForm):
     def deactivate(self):
         try:
             self.context.deactivate()
-        except ValueError, e:
-            self.status = e.args[0]
+        except ValueError as error:
+            self.status = error.args[0]
             return silvaforms.FAILURE
         return silvaforms.SUCCESS
 
@@ -293,7 +350,48 @@ class ForestVirtualHostSettings(silvaforms.ZMISubForm):
             return silvaforms.FAILURE
         try:
             aq_inner(self.context).set_hosts(data['hosts'])
-        except ValueError, e:
-            self.status = e.args[0]
+        except ValueError as error:
+            self.status = error.args[0]
             return silvaforms.FAILURE
         return silvaforms.SUCCESS
+
+
+class ForestVirtualHostExportSettings(silvaforms.ZMISubForm):
+    """Configure the virtual hosts.
+    """
+    grok.context(ForestService)
+    grok.view(ForestManageSettings)
+    grok.order(30)
+
+    label = _(u'Import or export the virtual hosts')
+    fields = silvaforms.Fields(interfaces.IVirtualHostImportSettings)
+    ignoreRequest=True
+    ignoreContent=True
+
+    @silvaforms.action(_(u"Import"))
+    def import_hosts(self):
+        data, errors = self.extractData()
+        if errors:
+            return silvaforms.FAILURE
+        try:
+            aq_inner(self.context).import_csv(data['hosts_csv'])
+        except ValueError as error:
+            self.status = error.args[0]
+            return silvaforms.FAILURE
+        self.status = _(u"Virtual hosts imported.")
+        return silvaforms.SUCCESS
+
+    @silvaforms.action(_(u"Export"))
+    def export_hosts(self):
+        self.redirect(self.url('export.csv'))
+
+
+class ForestVirtualHostExport(grok.View):
+    grok.context(ForestService)
+    grok.require('zope2.ViewManagementScreens')
+    grok.name('export.csv')
+
+    def render(self):
+        self.response.setHeader('Content-Type', 'text/csv;charset=utf-8')
+        return self.context.export_csv(self.response)
+
