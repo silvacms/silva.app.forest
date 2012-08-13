@@ -20,7 +20,7 @@ class SimpleURL(object):
         rule, index = vhm.host.by_path.get(path[1:], fallback=True)
         if rule is None:
             raise BadRequest(
-                u"No virtual host is defined for %s" % self.context)
+                u"No virtual host is defined for %s" % '/'.join(path))
 
         path = list(path[index + 1:])
         if relative:
