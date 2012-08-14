@@ -3,11 +3,15 @@
 # See also LICENSE.txt
 # $Id$
 
+import logging
+
 from infrae.wsgi.interfaces import IVirtualHosting
 from silva.app.forest.interfaces import IForestHosting
 from silva.core.views import absoluteurl
 
 from zExceptions import BadRequest
+
+logger = logging.getLogger('silva.app.forest')
 
 
 class SimpleURL(object):
@@ -19,8 +23,12 @@ class SimpleURL(object):
 
         rule, index = vhm.host.by_path.get(path[1:], fallback=True)
         if rule is None:
-            raise BadRequest(
-                u"No virtual host is defined for %s" % '/'.join(path))
+            logger.error(
+                u"No virtual host defined to compute URL for path %s.",
+                '/'.join(path))
+            # Broken fallback that will generate a relative URL to
+            # prevent breaking the ZMI.
+            return '/'.join(path)
 
         path = list(path[index + 1:])
         if relative:
