@@ -27,6 +27,7 @@ class BreadcrumbTestCase(unittest.TestCase):
         factory = self.root.docs.dev.manage_addProduct['Silva']
         factory.manage_addFolder('resources', 'Resources')
 
+
 class DefaultBreadcrumbTestCase(BreadcrumbTestCase):
 
     def test_not_activated(self):
