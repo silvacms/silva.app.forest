@@ -3,6 +3,8 @@
 # See also LICENSE.txt
 # $Id$
 
+import urlparse
+
 from five import grok
 
 from infrae.wsgi.interfaces import IRequest, IVirtualHosting
@@ -24,6 +26,13 @@ class VirtualHosting(grok.MultiAdapter):
         self.request = request
         self.root = None
         self.host = None
+
+    def rewrite_url(self, base_url, original_url):
+        base = (None, None)
+        if base_url:
+            base = urlparse.urlparse(base_url)[:2]
+        return urlparse.urlunparse(
+            base + urlparse.urlparse(original_url)[2:])
 
     def __call__(self, method, path):
         root = self.context
