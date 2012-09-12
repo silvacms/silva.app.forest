@@ -75,12 +75,19 @@ class ServiceTestCase(unittest.TestCase):
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/')
         self.assertEqual(rewrite.rewrite, '/root')
-        self.assertEqual(rewrite.url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, [])
 
+        # Test host
         query_host = service.query(url2tuple('http://infrae.com'))
-        self.assertIs(query_host, host)
+        self.assertIsNot(query_host, None)
+        self.assertEqual(query_host.url, 'http://infrae.com')
+        # Test rule
+        query_rule, index = query_host.query(('contact',))
+        self.assertEqual(index, 0)
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(query_rule.url, 'http://infrae.com')
+        self.assertEqual(query_rule.path, ('root',))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, [])
 
     def test_host_sub(self):
         """Create an host that is a sub-path to a site.
@@ -103,14 +110,21 @@ class ServiceTestCase(unittest.TestCase):
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/silva')
         self.assertEqual(rewrite.rewrite, '/root')
-        self.assertEqual(rewrite.url, 'http://infrae.com/docs/silva')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['docs', 'silva'])
 
+        # Test host
         query_host = service.query(url2tuple('http://infrae.com'))
         self.assertIs(query_host, None)
         query_host = service.query(url2tuple('http://infrae.com/docs'))
-        self.assertIs(query_host, host)
+        self.assertIsNot(query_host, None)
+        self.assertEqual(query_host.url, 'http://infrae.com/docs')
+        # Test rule
+        query_rule, index = query_host.query(('docs', 'silva', 'index'))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 2)
+        self.assertEqual(query_rule.url, 'http://infrae.com/docs/silva')
+        self.assertEqual(query_rule.path, ('root',))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['docs', 'silva'])
 
     def test_host_multiple_rewrite(self):
         """Set an host that contains multiple rewrites.
@@ -142,33 +156,50 @@ class ServiceTestCase(unittest.TestCase):
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/')
         self.assertEqual(rewrite.rewrite, '/root')
-        self.assertEqual(rewrite.url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, [])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
         rewrite = host.rewrites[1]
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/admin')
         self.assertEqual(rewrite.rewrite, '/root/docs/admin')
-        self.assertEqual(rewrite.url, 'http://infrae.com/admin')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['admin'])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
         rewrite = host.rewrites[2]
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/hidden/advanced')
         self.assertEqual(rewrite.rewrite, '/root/docs/dev')
-        self.assertEqual(rewrite.url, 'http://infrae.com/hidden/advanced')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['hidden', 'advanced'])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
 
-        # test query
+        # Test query
         query_host = service.query(url2tuple('http://infrae.com'))
-        self.assertIs(query_host, host)
+        self.assertIsNot(query_host, None)
+        self.assertEqual(query_host.url, 'http://infrae.com')
+
+        # Test rewrites
+        query_rule, index = query_host.query(('index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 0)
+        self.assertEqual(query_rule.url, 'http://infrae.com')
+        self.assertEqual(query_rule.path, ('root',))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, [])
+
+        query_rule, index = query_host.query(('admin', 'index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 1)
+        self.assertEqual(query_rule.url, 'http://infrae.com/admin')
+        self.assertEqual(query_rule.path, ('root', 'docs', 'admin'))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['admin'])
+
+        query_rule, index = query_host.query(('hidden', 'advanced',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 2)
+        self.assertEqual(query_rule.url, 'http://infrae.com/hidden/advanced')
+        self.assertEqual(query_rule.path, ('root', 'docs', 'dev'))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['hidden', 'advanced'])
 
     def test_host_duplicate(self):
         """Try to create a duplicated host.
@@ -292,27 +323,18 @@ http://infrae.com,/silva,/root,,on
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/')
         self.assertEqual(rewrite.rewrite, '/root')
-        self.assertEqual(rewrite.url, 'http://infrae.com/docs')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['docs'])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
         rewrite = host.rewrites[1]
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/admin')
         self.assertEqual(rewrite.rewrite, '/root/docs/admin')
-        self.assertEqual(rewrite.url, 'http://infrae.com/docs/admin')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['docs', 'admin'])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
         rewrite = host.rewrites[2]
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/hidden/advanced')
         self.assertEqual(rewrite.rewrite, '/root/docs/dev')
-        self.assertEqual(rewrite.url, 'http://infrae.com/docs/hidden/advanced')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['docs', 'hidden', 'advanced'])
         self.assertEqual(rewrite.skin, None)
         self.assertEqual(rewrite.skin_enforce, True)
         host = hosts[1]
@@ -324,11 +346,52 @@ http://infrae.com,/silva,/root,,on
         self.assertTrue(verifyObject(IRewrite, rewrite))
         self.assertEqual(rewrite.original, '/silva')
         self.assertEqual(rewrite.rewrite, '/root')
-        self.assertEqual(rewrite.url, 'http://infrae.com/silva')
-        self.assertEqual(rewrite.server_url, 'http://infrae.com')
-        self.assertEqual(rewrite.server_script, ['silva'])
         self.assertEqual(rewrite.skin, 'Standard Issue')
         self.assertEqual(rewrite.skin_enforce, False)
+
+        # Test query
+        query_host = service.query(url2tuple('http://infrae.com/docs'))
+        self.assertIsNot(query_host, None)
+        self.assertEqual(query_host.url, 'http://infrae.com/docs')
+
+        # Test rewrites
+        query_rule, index = query_host.query(('docs', 'index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 1)
+        self.assertEqual(query_rule.url, 'http://infrae.com/docs')
+        self.assertEqual(query_rule.path, ('root',))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['docs'])
+
+        query_rule, index = query_host.query(('docs', 'hidden', 'advanced', 'index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 3)
+        self.assertEqual(query_rule.url, 'http://infrae.com/docs/hidden/advanced')
+        self.assertEqual(query_rule.path, ('root', 'docs', 'dev'))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['docs', 'hidden', 'advanced'])
+
+        query_rule, index = query_host.query(('docs', 'admin', 'index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 2)
+        self.assertEqual(query_rule.url, 'http://infrae.com/docs/admin')
+        self.assertEqual(query_rule.path, ('root', 'docs', 'admin'))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['docs', 'admin'])
+
+        # Test query
+        query_host = service.query(url2tuple('http://infrae.com'))
+        self.assertIsNot(query_host, None)
+        self.assertEqual(query_host.url, 'http://infrae.com')
+
+        # Test rewrite
+        query_rule, index = query_host.query(('silva', 'index',))
+        self.assertIsNot(query_rule, None)
+        self.assertEqual(index, 1)
+        self.assertEqual(query_rule.url, 'http://infrae.com/silva')
+        self.assertEqual(query_rule.path, ('root',))
+        self.assertEqual(query_rule.server_url, 'http://infrae.com')
+        self.assertEqual(query_rule.server_script, ['silva'])
 
     def test_import_csv_invalid(self):
         """Test import the hosts from a CSV that have the wrong number

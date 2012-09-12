@@ -779,7 +779,7 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
     def test_frontend_alias(self):
         request = TestRequest(
             application=self.root,
-            url='http://localhost/info',
+            url='http://frontend.localhost/info',
             headers=[('X-VHM-Url', 'http://frontend.localhost')])
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
@@ -797,13 +797,13 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
 
         self.assertEqual(
             brain.getURL(),
-            'http://localhost')
+            'http://frontend.localhost')
         self.assertEqual(
             str(url),
-            'http://localhost')
+            'http://frontend.localhost')
         self.assertEqual(
             url.url(),
-            'http://localhost')
+            'http://frontend.localhost')
         self.assertEqual(
             url.url(relative=True),
             '/')
@@ -812,10 +812,10 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
             '/')
         self.assertEqual(
             url.url(preview=True),
-            'http://localhost')
+            'http://frontend.localhost')
         self.assertEqual(
             url.preview(),
-            'http://localhost')
+            'http://frontend.localhost')
 
         catalog = root.service_catalog
         brains = catalog(meta_type='Silva Root', path='/root')
@@ -827,13 +827,13 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
 
         self.assertEqual(
             brain.getURL(),
-            'http://localhost/info')
+            'http://frontend.localhost/info')
         self.assertEqual(
             str(url),
-            'http://localhost/info')
+            'http://frontend.localhost/info')
         self.assertEqual(
             url.url(),
-            'http://localhost/info')
+            'http://frontend.localhost/info')
         self.assertEqual(
             url.url(relative=True),
             '/info')
@@ -842,10 +842,10 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
             '/info')
         self.assertEqual(
             url.url(preview=True),
-            'http://localhost/info')
+            'http://frontend.localhost/info')
         self.assertEqual(
             url.preview(),
-            'http://localhost/info')
+            'http://frontend.localhost/info')
 
     def test_backend(self):
         request = TestRequest(

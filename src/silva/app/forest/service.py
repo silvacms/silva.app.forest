@@ -50,6 +50,9 @@ def to_str(value):
         return ''
     raise NotImplementedError()
 
+def to_url(url):
+    return str(url).rstrip('/')
+
 
 class ForestService(SilvaService):
     grok.implements(interfaces.IForestService)
@@ -109,12 +112,10 @@ class ForestService(SilvaService):
         query = {}
         root = self.getPhysicalRoot()
         for host in hosts:
-            host.prepare(root)
-            for url in [host.url, ] + list(host.aliases):
-                key = utils.url2tuple(url)
-                if key in query:
-                    raise ValueError(u"Double entry for host %s." % url)
-                query[key] = host
+            for entry in host.build(root):
+                if entry.key in query:
+                    raise ValueError(u"Double entry for host %s." % entry.url)
+                query[entry.key] = entry
 
         # Save changes.
         self._hosts = hosts
@@ -188,24 +189,31 @@ class Rewrite(object):
         self.rewrite = str(rewrite)
         self.skin = skin
         self.skin_enforce = skin_enforce
-        self.path = []
-        self.url = None
-        self.server_url = None
-        self.server_script = None
 
-    def prepare(self, host, root):
-        self.path = utils.path2tuple(self.rewrite)
-        self.url = (host.url + self.original).rstrip('/')
-        url_parts = urlparse.urlparse(self.url)
-        self.server_url = urlparse.urlunparse(url_parts[:2] + ('',) * 4)
-        self.server_script = split_path_info(url_parts[2])
+
+class RewriteRule(object):
+    """A Rewrite Rule is a Rewrite used in the context of a given
+    virtual host URL.
+    """
+
+    def __init__(self, root, url, rewrite):
+        self.path = utils.path2tuple(rewrite.rewrite)
+        self.url = to_url(url + rewrite.original)
+        parts = urlparse.urlparse(self.url)
+        self.server_url = urlparse.urlunparse(parts[:2] + ('',) * 4)
+        self.server_script = split_path_info(parts[2])
+        self.skin = rewrite.skin
+        self.skin_enforce = rewrite.skin_enforce
         try:
             traverse(self.path, root)
         except zExceptions.BadRequest:
-            raise ValueError(u"Invalid rewrite path %s" % self.rewrite)
+            raise ValueError(u"Invalid rewrite path %s" % rewrite.rewrite)
 
     def apply(self, root, request):
-        content = traverse(self.path, root, request)
+        try:
+            content = traverse(self.path, root, request)
+        except zExceptions.BadRequest:
+            return root
         request['URL'] = self.url
         request['ACTUAL_URL'] = self.server_url + urlparse.urlunparse(
             ('', '') + urlparse.urlparse(request['ACTUAL_URL'])[2:])
@@ -233,9 +241,53 @@ class Rewrite(object):
                     if skin is not None:
                         # We found a skin to apply
                         applySkinButKeepSome(request, skin)
-
         return content
 
+
+class VirtualHostRule(object):
+    """A virtual host lookup entry is the result of returned by a
+    query to the service.
+    """
+
+    def __init__(self, root, url, rewrites):
+        self.url = url
+        self.key = utils.url2tuple(url)
+        self.by_url = utils.TupleMap()
+        self.by_path = utils.TupleMap()
+
+        base = self.key[3:]
+        for rewrite in rewrites:
+            rule = RewriteRule(root, url, rewrite)
+            try:
+                self.by_url.add(
+                    base + utils.path2tuple(rewrite.original),
+                    rule)
+            except KeyError:
+                raise ValueError(
+                    u"Duplicate url entry for %s in %s" % (
+                        rewrite.original, url))
+            try:
+                self.by_path.add(rule.path, rule)
+            except KeyError:
+                raise ValueError(
+                    u"Duplicate path entry for %s in %s" % (
+                        rewrite.rewrite, url))
+
+    def query(self, key):
+        return self.by_url.get(key, fallback=True)
+
+
+class VirtualHost(object):
+    grok.implements(interfaces.IVirtualHost)
+
+    def __init__(self, url, aliases, rewrites):
+        self.url = to_url(url)
+        self.aliases = map(to_url, aliases)
+        self.rewrites = rewrites
+
+    def build(self, root):
+        for url in [self.url] + self.aliases:
+            yield VirtualHostRule(root, url, self.rewrites)
 
 
 grok.global_utility(
@@ -243,40 +295,6 @@ grok.global_utility(
     provides=IFactory,
     name=interfaces.IRewrite.__identifier__,
     direct=True)
-
-
-class VirtualHost(object):
-    grok.implements(interfaces.IVirtualHost)
-
-    def __init__(self, url, aliases, rewrites):
-        self.url = str(url).rstrip('/')
-        self.aliases = aliases
-        self.rewrites = rewrites
-        self.by_url = utils.TupleMap()
-        self.by_path = utils.TupleMap()
-
-    def prepare(self, root):
-        base = utils.url2tuple(self.url)[3:]
-        for rewrite in self.rewrites:
-            rewrite.prepare(self, root)
-            try:
-                self.by_url.add(
-                    base + utils.path2tuple(rewrite.original),
-                    rewrite)
-            except KeyError:
-                raise ValueError(
-                    u"Duplicate url entry for %s in %s" % (
-                        rewrite.original, self.url))
-            try:
-                self.by_path.add(rewrite.path, rewrite)
-            except KeyError:
-                raise ValueError(
-                    u"Duplicate path entry for %s in %s" % (
-                        rewrite.rewrite, self.url))
-
-    def query(self, key):
-        return self.by_url.get(key, fallback=True)
-
 
 grok.global_utility(
     VirtualHost,

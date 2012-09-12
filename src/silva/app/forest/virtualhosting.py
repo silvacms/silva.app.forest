@@ -6,7 +6,6 @@
 import urlparse
 
 from five import grok
-from zope.component import queryUtility
 
 from infrae.wsgi.interfaces import IRequest, IVirtualHosting
 from infrae.wsgi.utils import traverse
@@ -63,6 +62,7 @@ class VirtualHosting(grok.MultiAdapter):
         if url:
             url_key = utils.url2tuple(url)
             self.service = traverse(root.__silva__ + ('service_forest',), root)
+            assert IForestService.providedBy(self.service)
             self.host = self.service.query(url_key)
             if self.host is not None:
                 path_key = tuple(reversed(path))
