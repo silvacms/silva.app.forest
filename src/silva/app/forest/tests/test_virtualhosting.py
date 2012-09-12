@@ -751,6 +751,12 @@ class MultipleHostsHostingTestCase(VirtualHostingTestCase):
             url.url(preview=True),
             'http://localhost/manual/++preview++')
         self.assertEqual(
+            url.url(preview=True, host='http://frontend.localhost'),
+            'http://frontend.localhost/manual/++preview++')
+        self.assertEqual(
+            url.url(preview=True, host='http://admin.localhost'),
+            'http://admin.localhost/++preview++/docs')
+        self.assertEqual(
             url.preview(),
             'http://localhost/manual/++preview++')
 
