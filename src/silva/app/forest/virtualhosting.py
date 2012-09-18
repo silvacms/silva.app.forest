@@ -5,8 +5,10 @@
 
 import urlparse
 
+from Acquisition import aq_inner, aq_base, IAcquirer
 from five import grok
 
+from infrae.wsgi.interfaces import IPublicationAfterTraversal
 from infrae.wsgi.interfaces import IRequest, IVirtualHosting
 from infrae.wsgi.utils import traverse
 
@@ -14,7 +16,7 @@ from . import utils
 from .interfaces import IForestApplication, IForestHosting
 from .interfaces import IForestService
 
-from zExceptions import BadRequest
+from zExceptions import BadRequest, NotFound
 
 
 class VirtualHosting(grok.MultiAdapter):
@@ -76,3 +78,19 @@ class VirtualHosting(grok.MultiAdapter):
                     raise BadRequest(u"This URL is not in the virtual host.")
 
         return root, method, path
+
+
+@grok.subscribe(IPublicationAfterTraversal)
+def disable_acquisition_in_url(event):
+    content = event.content
+    if not (IAcquirer.providedBy(content) or hasattr(content, '__parent__')):
+        return
+
+    seen = set()
+    content = aq_inner(content)
+    while content is not None:
+        seen.add(id(aq_base(content)))
+        content = getattr(content, 'aq_parent',
+                          getattr(content, '__parent__', None))
+        if id(aq_base(content)) in seen:
+            raise NotFound()
