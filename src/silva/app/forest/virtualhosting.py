@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2011 Infrae. All rights reserved.
+# Copyright (c) 2011-2012 Infrae. All rights reserved.
 # See also LICENSE.txt
-# $Id$
 
 import urlparse
 
@@ -80,17 +79,17 @@ class VirtualHosting(grok.MultiAdapter):
         return root, method, path
 
 
-@grok.subscribe(IPublicationAfterTraversal)
-def disable_acquisition_in_url(event):
-    content = event.content
-    if not (IAcquirer.providedBy(content) or hasattr(content, '__parent__')):
-        return
+# @grok.subscribe(IPublicationAfterTraversal)
+# def disable_acquisition_in_url(event):
+#     content = event.content
+#     if not (IAcquirer.providedBy(content) or hasattr(content, '__parent__')):
+#         return
 
-    seen = set()
-    content = aq_inner(content)
-    while content is not None:
-        seen.add(id(aq_base(content)))
-        content = getattr(content, 'aq_parent',
-                          getattr(content, '__parent__', None))
-        if id(aq_base(content)) in seen:
-            raise NotFound()
+#     seen = set()
+#     content = aq_inner(content)
+#     while content is not None:
+#         seen.add(id(aq_base(content)))
+#         content = getattr(content, 'aq_parent',
+#                           getattr(content, '__parent__', None))
+#         if id(aq_base(content)) in seen:
+#             raise NotFound()

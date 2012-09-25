@@ -26,3 +26,16 @@ This is done like this in Apache, for instance::
     RewriteRule ^/(.*)$ http://localhost:7778/$1 [P]
  </VirtualHost>
 
+
+Credits
+=======
+
+Thanks to `WUW`_ for sponsoring this extension.
+
+Code repository
+===============
+
+You can find the code of this extension in Mercurial:
+https://hg.infrae.com/silva.app.forest/.
+
+.. _WUW: http://www.wu.ac.at/

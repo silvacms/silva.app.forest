@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2002-2011 Infrae. All rights reserved.
+# Copyright (c) 2002-2012 Infrae. All rights reserved.
 # See also LICENSE.txt
-# $Id$
 
 from setuptools import setup, find_packages
 import os
 
-version = '1.0dev'
+version = '3.0c1'
 
 tests_require = [
     'Products.Silva [test]',
@@ -36,8 +35,6 @@ setup(name='silva.app.forest',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-        'Zope2',
-        'collective.monkeypatcher',
         'five.grok',
         'infrae.wsgi',
         'silva.core.conf',
@@ -45,10 +42,12 @@ setup(name='silva.app.forest',
         'silva.core.layout',
         'silva.core.services',
         'silva.core.views',
+        'silva.translations',
         'zeam.form.silva',
         'zope.component',
         'zope.interface',
-        'zope.traversing',
+        'zope.schema',
+        'zope.publisher',
         ],
       tests_require=tests_require,
       extras_require={'test': tests_require},
