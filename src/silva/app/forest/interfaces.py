@@ -91,3 +91,26 @@ class IForestHosting(IVirtualHosting):
     """Our implements for the virtual hosting.
     """
     host = Attribute(u"Current used virtual host")
+
+
+class IForestEvent(Interface):
+    """ Base interface for forest events.
+    """
+    root = Attribute(u"Application root.")
+    silva = Attribute(u"Silva root.")
+    service = Attribute(u"Forest service.")
+
+
+class IForestActivatedEvent(IForestEvent):
+    """ Forest as been activated.
+    """
+
+
+class IForestWillBeDeactivatedEvent(IForestEvent):
+    """ Forest will be deactivated.
+    """
+
+
+class IForestDeactivatedEvent(IForestEvent):
+    """ Forest has been deactivated.
+    """

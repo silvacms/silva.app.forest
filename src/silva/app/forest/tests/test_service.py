@@ -10,8 +10,12 @@ from zope.interface.verify import verifyObject
 from infrae.wsgi.testing import TestRequest
 from infrae.wsgi.interfaces import IVirtualHosting
 
+from Products.Silva.testing import assertTriggersEvents, assertNotTriggersEvents
+
 from ..interfaces import IForestService, IVirtualHost, IRewrite
 from ..interfaces import IForestHosting
+from ..interfaces import IForestActivatedEvent, IForestWillBeDeactivatedEvent
+from ..interfaces import IForestDeactivatedEvent
 from ..service import VirtualHost, Rewrite
 from ..testing import FunctionalLayer
 from ..utils import url2tuple
@@ -34,7 +38,8 @@ class ServiceTestCase(unittest.TestCase):
 
     def test_activation(self):
         service = queryUtility(IForestService)
-        service.activate()
+        with assertTriggersEvents('ForestActivatedEvent'):
+            service.activate()
         self.assertTrue(service.is_active())
 
         request = TestRequest(application=self.root)
@@ -43,15 +48,18 @@ class ServiceTestCase(unittest.TestCase):
 
         # You cannot activate the service twice.
         with self.assertRaises(ValueError):
-            service.activate()
+            with assertNotTriggersEvents():
+                service.activate()
 
         self.assertTrue(service.is_active())
-        service.deactivate()
+        with assertTriggersEvents(
+                'ForestWillBeDeactivatedEvent', 'ForestDeactivatedEvent'):
+            service.deactivate()
         self.assertFalse(service.is_active())
-
         # The service is not active.
         with self.assertRaises(ValueError):
-            service.deactivate()
+            with assertNotTriggersEvents():
+                service.deactivate()
 
     def test_host_root(self):
         """Set an host that is the root of the URL.

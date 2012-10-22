@@ -13,6 +13,7 @@ from Acquisition import aq_inner
 import zExceptions
 
 from five import grok
+from zope.event import notify
 from zope.component import IFactory
 from zope.component import queryUtility
 from zope.interface import alsoProvides, noLongerProvides
@@ -29,6 +30,8 @@ from silva.core.layout.traverser import applySkinButKeepSome
 from silva.core.services.base import SilvaService
 from silva.translations import translate as _
 from zeam.form import silva as silvaforms
+from . import events
+
 
 logger = logging.getLogger('infrae.rewriterule')
 
@@ -153,6 +156,8 @@ class ForestService(SilvaService):
                 _(u"The feature is already activated for a Silva site."))
         setattr(root, '__silva__', self.get_silva_path())
         alsoProvides(root, interfaces.IForestApplication)
+        notify(events.ForestActivatedEvent(
+            root, self.get_root(), self))
 
     security.declareProtected(
         'View Management Screens', 'deactivate')
@@ -165,8 +170,11 @@ class ForestService(SilvaService):
         if path != self.get_silva_path():
             raise ValueError(
                 _(u"The feature is activated by an another Silva site."))
+        silva_root = self.get_root()
+        notify(events.ForestWillBeDeactivatedEvent(root, silva_root, self))
         delattr(root, '__silva__')
         noLongerProvides(root, interfaces.IForestApplication)
+        notify(events.ForestDeactivatedEvent(root, silva_root, self))
 
 
 InitializeClass(ForestService)
