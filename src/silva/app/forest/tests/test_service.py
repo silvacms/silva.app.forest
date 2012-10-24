@@ -14,8 +14,6 @@ from Products.Silva.testing import assertTriggersEvents, assertNotTriggersEvents
 
 from ..interfaces import IForestService, IVirtualHost, IRewrite
 from ..interfaces import IForestHosting
-from ..interfaces import IForestActivatedEvent, IForestWillBeDeactivatedEvent
-from ..interfaces import IForestDeactivatedEvent
 from ..service import VirtualHost, Rewrite
 from ..testing import FunctionalLayer
 from ..utils import url2tuple
@@ -38,7 +36,8 @@ class ServiceTestCase(unittest.TestCase):
 
     def test_activation(self):
         service = queryUtility(IForestService)
-        with assertTriggersEvents('ForestActivatedEvent'):
+        with assertTriggersEvents(
+                'ForestWillBeActivatedEvent', 'ForestActivatedEvent'):
             service.activate()
         self.assertTrue(service.is_active())
 
