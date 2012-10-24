@@ -106,6 +106,11 @@ class IForestActivatedEvent(IForestEvent):
     """
 
 
+class IForestWillBeActivatedEvent(IForestEvent):
+    """ Forest will be activated.
+    """
+
+
 class IForestWillBeDeactivatedEvent(IForestEvent):
     """ Forest will be deactivated.
     """

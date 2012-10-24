@@ -155,9 +155,10 @@ class ForestService(SilvaService):
             raise ValueError(
                 _(u"The feature is already activated for a Silva site."))
         setattr(root, '__silva__', self.get_silva_path())
+        silva_root = self.get_root()
+        notify(events.ForestWillBeActivatedEvent(root, silva_root, self))
         alsoProvides(root, interfaces.IForestApplication)
-        notify(events.ForestActivatedEvent(
-            root, self.get_root(), self))
+        notify(events.ForestActivatedEvent(root, silva_root, self))
 
     security.declareProtected(
         'View Management Screens', 'deactivate')
