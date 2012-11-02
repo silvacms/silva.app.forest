@@ -59,10 +59,10 @@ class VirtualHosting(grok.MultiAdapter):
 
     def __call__(self, method, path):
         root = self.context
+        self.service = traverse(root.__silva__ + ('service_forest',), root)
         url = self.request.environ.get('HTTP_X_VHM_URL')
         if url:
             url_key = utils.url2tuple(url)
-            self.service = traverse(root.__silva__ + ('service_forest',), root)
             assert IForestService.providedBy(self.service)
             self.host = self.service.query(url_key)
             if self.host is not None:
