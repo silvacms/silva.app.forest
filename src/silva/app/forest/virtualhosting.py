@@ -28,7 +28,13 @@ class VirtualHosting(grok.MultiAdapter):
         self.request = request
         self.root = None
         self.host = None
-        self.service = traverse(
+        try:
+            self.service = self._load_service()
+        except BadRequest:
+            self.service = None
+
+    def _load_service(self):
+        return traverse(
             self.context.__silva__ + ('service_forest',), self.context)
 
     def rewrite_url(self, base_url, original_url):
@@ -61,6 +67,8 @@ class VirtualHosting(grok.MultiAdapter):
     def __call__(self, method, path):
         root = self.context
         url = self.request.environ.get('HTTP_X_VHM_URL')
+        if self.service is None:
+            self.service = self._load_service()
         if url:
             url_key = utils.url2tuple(url)
             assert IForestService.providedBy(self.service)
