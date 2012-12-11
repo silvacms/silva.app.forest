@@ -1,10 +1,11 @@
 Changes
 =======
 
-3.0 (unreleased)
+3.0 (2012/12/11)
 ----------------
 
-* ...
+* Add events upon activation/deactivation, in order to be able to
+  extend the forest functionality in an extension.
 
 3.0c1 (2012/90/24)
 ------------------
