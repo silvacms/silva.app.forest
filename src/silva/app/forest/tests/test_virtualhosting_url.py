@@ -56,6 +56,9 @@ class RewriteURLTestCase(unittest.TestCase):
         plugin = request.query_plugin(request.application, IVirtualHosting)
         root, method, path = plugin(request.method, request.path)
 
+        self.assertIsNot(
+            plugin.host,
+            None)
         self.assertEqual(
             plugin.rewrite_url(None, 'http://localhost/man/edit'),
             '/man/edit')

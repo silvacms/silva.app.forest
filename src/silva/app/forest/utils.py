@@ -74,6 +74,21 @@ class TupleMap(object):
             return value, index + 1
         return default, default_index
 
+    def top(self):
+        result = []
+        current = self._store.items()
+
+        while not result:
+            after = []
+            while current:
+                piece, value = current.pop()
+                if piece is None:
+                    result.append(value)
+                else:
+                    after.append(value)
+            current = after
+        return result
+
     def list(self):
         result = []
 
