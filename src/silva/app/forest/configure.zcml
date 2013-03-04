@@ -6,6 +6,7 @@
 
   <include package="five.grok" />
   <include package="infrae.wsgi" />
+  <include package="silva.core.views" />
 
   <five:registerPackage package="." />
 
@@ -16,14 +17,14 @@
   <view
      for="silva.core.interfaces.ISilvaObject"
      factory=".absoluteurl.ContentAbsoluteURL"
-     type="infrae.wsgi.interfaces.IRequest"
+     type=".interfaces.IForestRequest"
      permission="zope.Public"
      provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
      for="silva.core.interfaces.ISilvaObject"
-     layer="infrae.wsgi.interfaces.IRequest"
+     layer=".interfaces.IForestRequest"
      name="absolute_url"
      class=".absoluteurl.ContentAbsoluteURL"
      permission="zope.Public"
@@ -33,14 +34,14 @@
   <view
      for="silva.core.interfaces.IVersion"
      factory=".absoluteurl.VersionAbsoluteURL"
-     type="infrae.wsgi.interfaces.IRequest"
+     type=".interfaces.IForestRequest"
      permission="zope.Public"
      provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
      for="silva.core.interfaces.IVersion"
-     layer="infrae.wsgi.interfaces.IRequest"
+     layer=".interfaces.IForestRequest"
      name="absolute_url"
      class=".absoluteurl.VersionAbsoluteURL"
      permission="zope.Public"
@@ -50,14 +51,14 @@
   <view
      for="OFS.interfaces.ITraversable"
      factory=".absoluteurl.AbsoluteURL"
-     type="infrae.wsgi.interfaces.IRequest"
+     type=".interfaces.IForestRequest"
      permission="zope.Public"
      provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
      for="OFS.interfaces.ITraversable"
-     layer="infrae.wsgi.interfaces.IRequest"
+     layer=".interfaces.IForestRequest"
      name="absolute_url"
      class=".absoluteurl.AbsoluteURL"
      permission="zope.Public"
@@ -67,14 +68,14 @@
   <view
      for="Products.ZCatalog.interfaces.ICatalogBrain"
      factory=".absoluteurl.BrainAbsoluteURL"
-     type="infrae.wsgi.interfaces.IRequest"
+     type=".interfaces.IForestRequest"
      permission="zope.Public"
      provides="silva.core.views.interfaces.IContentURL"
      />
 
   <browser:page
      for="Products.ZCatalog.interfaces.ICatalogBrain"
-     layer="infrae.wsgi.interfaces.IRequest"
+     layer=".interfaces.IForestRequest"
      name="absolute_url"
      class=".absoluteurl.BrainAbsoluteURL"
      permission="zope.Public"

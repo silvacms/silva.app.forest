@@ -85,7 +85,7 @@ class TupleMap(object):
                 if piece is None:
                     result.append(value)
                 else:
-                    after.append(value)
+                    after.extend(value.items())
             current = after
         return result
 

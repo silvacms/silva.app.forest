@@ -13,6 +13,7 @@ from zope import schema
 from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from zope.schema.interfaces import IContextSourceBinder
 from infrae.wsgi.interfaces import IVirtualHosting
+from infrae.wsgi.interfaces import IRequest
 
 from silva.core.interfaces import ISilvaService
 from silva.translations import translate as _
@@ -28,6 +29,11 @@ def skins(context):
     tokens.insert(0, SimpleTerm(
             value=None, token='none', title=_('(No skin change)')))
     return SimpleVocabulary(tokens)
+
+
+class IForestRequest(IRequest):
+    """A request using the forest application.
+    """
 
 
 class IForestApplication(IApplication):

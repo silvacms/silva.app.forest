@@ -4,6 +4,7 @@
 
 import urlparse
 
+from zope.interface import alsoProvides
 from Acquisition import aq_inner, aq_base, IAcquirer
 from five import grok
 
@@ -13,7 +14,7 @@ from infrae.wsgi.utils import traverse
 
 from . import utils
 from .interfaces import IForestApplication, IForestHosting
-from .interfaces import IForestService
+from .interfaces import IForestService, IForestRequest
 
 from zExceptions import BadRequest, NotFound
 
@@ -81,6 +82,7 @@ class VirtualHosting(grok.MultiAdapter):
                     self.root = root
                     if index:
                         path = path[:-index]
+                    alsoProvides(self.request, IForestRequest)
                 else:
                     raise BadRequest(u"This URL is not in the virtual host.")
 
