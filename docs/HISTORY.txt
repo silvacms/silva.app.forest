@@ -1,10 +1,14 @@
 Changes
 =======
 
-3.0.1 (unreleased)
+3.0.1 (2013/03/06)
 ------------------
 
-* ...
+* Add an interface ``IForestRequest`` on the request when the
+  extension is used. Bind all feature to this new request.
+
+* Implement the new top level methods of ``IVirtualHost`` to return
+  information based the highest rule available for an virtual url.
 
 3.0 (2012/12/11)
 ----------------
