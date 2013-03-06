@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2002-2012 Infrae. All rights reserved.
+# Copyright (c) 2002-2013 Infrae. All rights reserved.
 # See also LICENSE.txt
 
 from setuptools import setup, find_packages
@@ -37,6 +37,7 @@ setup(name='silva.app.forest',
       install_requires=[
         'five.grok',
         'infrae.wsgi',
+        'setuptools',
         'silva.core.conf',
         'silva.core.interfaces',
         'silva.core.layout',
@@ -46,8 +47,8 @@ setup(name='silva.app.forest',
         'zeam.form.silva',
         'zope.component',
         'zope.interface',
-        'zope.schema',
         'zope.publisher',
+        'zope.schema',
         ],
       tests_require=tests_require,
       extras_require={'test': tests_require},
