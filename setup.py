@@ -15,7 +15,7 @@ tests_require = [
 
 setup(name='silva.app.forest',
       version=version,
-      description="Advanced virtual hosting for Silva",
+      description="Advanced virtual hosting for Silva CMS",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       classifiers=[
@@ -27,7 +27,7 @@ setup(name='silva.app.forest',
       keywords='silva advanced virtual hosting rewrite rules',
       author='Infrae',
       author_email='info@infrae.com',
-      url='http://infrae.com/products/silva',
+      url='https://github.com/silvacms/silva.app.forest',
       license='BSD',
       package_dir={'': 'src'},
       packages=find_packages('src'),
